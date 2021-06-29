@@ -6,8 +6,6 @@ const path = require('path')
 // eslint-disable-next-line import/no-extraneous-dependencies
 const transform = require('@babel/core').transform
 
-const clientPath = path.resolve(__dirname, 'client')
-
 const babelClientPresetEnvOptions = {
   modules: 'commonjs',
   targets: {
@@ -40,15 +38,6 @@ const babelClientOpts = {
       test: /\.tsx?$/,
       // eslint-disable-next-line import/no-extraneous-dependencies
       plugins: [require('@babel/plugin-proposal-numeric-separator').default],
-    },
-    {
-      test: (p) => p.startsWith(clientPath),
-      presets: [
-        [
-          '@babel/preset-env',
-          { ...babelClientPresetEnvOptions, modules: false },
-        ],
-      ],
     },
   ],
 }

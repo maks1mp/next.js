@@ -415,6 +415,12 @@ export default async (opts: { webpackHMR?: any } = {}) => {
   }
 }
 
+function requireEnsureAsync(dep: string): Promise<any> {
+  return new Promise((resolve, reject) => {
+    return require.ensure([dep], (require) => resolve(require(dep)), reject)
+  })
+}
+
 export async function render(renderingProps: RenderRouteInfo): Promise<void> {
   if (renderingProps.err) {
     await renderError(renderingProps)
@@ -466,13 +472,17 @@ export function renderError(renderErrorProps: RenderErrorProps): Promise<any> {
   console.error(err)
   return pageLoader
     .loadPage('/_error')
-    .then(({ page: ErrorComponent, styleSheets }) => {
-      return lastAppProps?.Component === ErrorComponent
-        ? import('next/dist/pages/_error').then((m) => ({
-            ErrorComponent: m.default as React.ComponentType<{}>,
-            styleSheets: [],
-          }))
-        : { ErrorComponent, styleSheets }
+    .then(async ({ page: ErrorComponent, styleSheets }) => {
+      if (lastAppProps?.Component === ErrorComponent) {
+        // Error loop detected on rerender
+        const DefaultError = (await requireEnsureAsync('../pages/_error'))
+          .default as React.ComponentType<{}>
+        return {
+          ErrorComponent: DefaultError,
+          styleSheets: [],
+        }
+      }
+      return { ErrorComponent, styleSheets }
     })
     .then(({ ErrorComponent, styleSheets }) => {
       // In production we do a normal render with the `ErrorComponent` as component.
